@@ -4,18 +4,36 @@ import { useEffect, useState } from "react";
 import type { MouseEvent } from "react";
 import { useMotionValue, useSpring } from "framer-motion";
 
+const RESPECT_REDUCED_MOTION =
+  process.env.NEXT_PUBLIC_RESPECT_REDUCED_MOTION === "true";
+
 export function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(() =>
-    typeof window === "undefined"
-      ? false
-      : window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  const [reduced, setReduced] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      RESPECT_REDUCED_MOTION &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
 
   useEffect(() => {
+    if (!RESPECT_REDUCED_MOTION) return;
+
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const legacyQuery = query as MediaQueryList & {
+      addListener?: (listener: (event: MediaQueryListEvent) => void) => void;
+      removeListener?: (listener: (event: MediaQueryListEvent) => void) => void;
+    };
     const handleChange = (event: MediaQueryListEvent) => setReduced(event.matches);
-    query.addEventListener("change", handleChange);
-    return () => query.removeEventListener("change", handleChange);
+
+    if (typeof legacyQuery.addEventListener === "function") {
+      query.addEventListener("change", handleChange);
+      return () => query.removeEventListener("change", handleChange);
+    }
+
+    if (typeof legacyQuery.addListener === "function") {
+      legacyQuery.addListener(handleChange);
+      return () => legacyQuery.removeListener?.(handleChange);
+    }
   }, []);
 
   return reduced;
