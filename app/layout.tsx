@@ -3,7 +3,7 @@ import { Space_Grotesk, Inter, JetBrains_Mono, Caveat } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import { AmbientBackground, CustomCursor } from "@/components/Animations";
-import { Navbar, ScrollProgress, BackToTop } from "@/components/Navigation";
+import { Sidebar, ScrollProgress, BackToTop } from "@/components/Navigation";
 
 const caveat = Caveat({
   subsets: ["latin"],
@@ -82,8 +82,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AmbientBackground />
           <CustomCursor />
           <ScrollProgress />
-          <Navbar />
-          {children}
+          <Sidebar />
+          <div className="pl-[104px] sm:pl-[116px]">{children}</div>
           <BackToTop />
         </MotionConfig>
       </body>

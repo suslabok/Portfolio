@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence, useScroll, useSpring, useMotionValueEvent } from "framer-motion";
-import { Menu, X, ArrowUpRight, ArrowUp } from "lucide-react";
-import { Container, LogoMark, Magnetic } from "@/components/UI";
+import { ArrowUpRight, ArrowUp, Home, UserRound, Milestone, Layers, FolderKanban, Mail } from "lucide-react";
+import { Magnetic } from "@/components/UI";
 import { useActiveSection } from "@/lib/hooks";
 import { easeOutExpo } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -47,226 +48,127 @@ export function BackToTop() {
 }
 
 const NAV_ITEMS = [
-  { id: "home",     label: "Home" },
-  { id: "about",    label: "About" },
-  { id: "journey",  label: "Journey" },
-  { id: "skills",   label: "Stack" },
-  { id: "projects", label: "Projects" },
-  { id: "contact",  label: "Contact" },
+  { id: "home",     label: "Home",     icon: Home },
+  { id: "about",    label: "About",    icon: UserRound },
+  { id: "journey",  label: "Journey",  icon: Milestone },
+  { id: "skills",   label: "Stack",    icon: Layers },
+  { id: "projects", label: "Projects", icon: FolderKanban },
+  { id: "contact",  label: "Contact",  icon: Mail },
 ] as const;
 
 const IDS = NAV_ITEMS.map((item) => item.id);
 
 const pillTransition = { type: "spring", stiffness: 380, damping: 32 } as const;
 
-export function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+/** Small label bubble that pops out to the right of a dock icon on hover. */
+function DockTooltip({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      role="tooltip"
+      className="pointer-events-none absolute left-full ml-3 -translate-x-1 whitespace-nowrap rounded-lg bg-[#1c1512]/95 px-2.5 py-1 text-[11px] font-medium tracking-wide text-white opacity-0 shadow-[0_6px_18px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+    >
+      {children}
+    </span>
+  );
+}
+
+/** Pinned Polaroid photo — the dock's brand mark / "home" shortcut. */
+function DockBrand() {
+  return (
+    <Link href="#home" data-cursor-label="HOME" className="group relative mb-1 mt-3 flex items-center justify-center">
+      <div className="sidebar-pin" aria-hidden="true" />
+      <motion.div
+        whileHover={{ rotate: 0, scale: 1.06 }}
+        initial={{ rotate: -3 }}
+        transition={pillTransition}
+        className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white/70 shadow-[0_4px_10px_rgba(0,0,0,0.35)]"
+      >
+        <Image src="/images/profile.jpg" alt="Sushma Acharya" fill sizes="48px" className="object-cover" />
+      </motion.div>
+      <DockTooltip>Sushma Acharya</DockTooltip>
+    </Link>
+  );
+}
+
+interface DockNavListProps {
+  activeId: string;
+  layoutIdPrefix: string;
+}
+
+/** Vertical icon-only nav list for the glass dock. */
+function DockNavList({ activeId, layoutIdPrefix }: DockNavListProps) {
+  return (
+    <nav className="flex flex-1 flex-col items-center gap-2.5 py-3">
+      {NAV_ITEMS.map((item) => {
+        const isActive = activeId === item.id;
+        const Icon = item.icon;
+
+        return (
+          <Link
+            key={item.id}
+            href={`#${item.id}`}
+            data-cursor-label="GO"
+            aria-label={item.label}
+            className="group relative flex h-12 w-12 items-center justify-center rounded-2xl transition-transform duration-200 hover:scale-105"
+          >
+            {isActive && (
+              <motion.span
+                layoutId={`${layoutIdPrefix}-active-fill`}
+                transition={pillTransition}
+                className="absolute inset-0 rounded-2xl bg-[#a9695c] shadow-[0_4px_14px_rgba(0,0,0,0.35)]"
+              />
+            )}
+            {!isActive && (
+              <span className="absolute inset-0 rounded-2xl bg-white/0 transition-colors duration-200 group-hover:bg-white/10" />
+            )}
+
+            <Icon
+              className={cn(
+                "relative h-5 w-5 transition-colors",
+                isActive ? "text-white" : "text-white/55 group-hover:text-white/90"
+              )}
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+            <DockTooltip>{item.label}</DockTooltip>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+/** Fixed, narrow floating icon dock — true dark glass, always on. Replaces the top navbar. */
+export function Sidebar() {
   const activeId = useActiveSection(IDS);
 
-  useEffect(() => {
-    function handleScroll() {
-      setScrolled(window.scrollY > 40);
-    }
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    function handleResize() {
-      if (window.innerWidth >= 768) setMobileOpen(false);
-    }
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   return (
-    <motion.header
-      initial={{ y: -80, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
+    <motion.aside
+      initial={{ x: -30, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: easeOutExpo }}
-      className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-all duration-500",
-        scrolled
-          ? "border-b border-border bg-bg/90 py-3 shadow-[0_1px_24px_rgba(45,36,32,0.07)] backdrop-blur-xl"
-          : "py-5"
-      )}
+      className="glass-dock fixed left-3 top-1/2 z-40 flex w-[84px] -translate-y-1/2 flex-col items-center rounded-[32px] py-3 sm:left-4 sm:w-[92px]"
     >
-      <Container className="flex items-center justify-between gap-4">
-        {/* ── Logo ── */}
-        <Magnetic strength={0.25}>
-          <Link href="#home" data-cursor-label="HOME" className="shrink-0">
-            <motion.div whileHover={{ rotate: -4, scale: 1.05 }} transition={pillTransition}>
-              <LogoMark />
-            </motion.div>
+      <DockBrand />
+
+      <div className="mx-3 mb-1 mt-2 h-px w-6 bg-white/15" />
+
+      <DockNavList activeId={activeId} layoutIdPrefix="dock" />
+
+      <div className="mb-1 mt-1 flex items-center justify-center">
+        <Magnetic strength={0.15}>
+          <Link
+            href="#contact"
+            data-cursor-label="✉"
+            aria-label="Hire me"
+            className="group relative flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/8 text-white/80 transition-all duration-200 hover:border-white/35 hover:bg-white/16 hover:text-white"
+          >
+            <ArrowUpRight className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+            <DockTooltip>Hire me</DockTooltip>
           </Link>
         </Magnetic>
-
-        {/* ── Desktop nav pill container ── */}
-        <nav
-          className="hidden items-center md:flex"
-          onMouseLeave={() => setHoveredId(null)}
-        >
-          {/* outer capsule */}
-          <div className="relative flex items-center rounded-full border border-border bg-bg-elevated px-1 py-1 shadow-[0_2px_12px_rgba(45,36,32,0.06)]">
-            {NAV_ITEMS.map((item) => {
-              const isActive = activeId === item.id;
-              const isHovered = hoveredId === item.id;
-
-              return (
-                <Magnetic key={item.id} strength={0.15}>
-                  <Link
-                    href={`#${item.id}`}
-                    data-cursor-label="GO"
-                    onMouseEnter={() => setHoveredId(item.id)}
-                    className={cn(
-                      "group relative flex items-center gap-1.5 rounded-full px-3.5 py-2 transition-colors duration-200",
-                      isActive
-                        ? "text-bg"
-                        : "text-text-secondary hover:text-text-primary"
-                    )}
-                  >
-                    {/* Active filled pill */}
-                    {isActive && (
-                      <motion.span
-                        layoutId="nav-active-fill"
-                        transition={pillTransition}
-                        className="absolute inset-0 -z-10 rounded-full bg-[#8a5a52]"
-                      />
-                    )}
-
-                    {/* Hover ghost pill */}
-                    {!isActive && isHovered && (
-                      <motion.span
-                        layoutId="nav-hover-pill"
-                        transition={pillTransition}
-                        className="absolute inset-0 -z-10 rounded-full bg-bg-elevated-2"
-                      />
-                    )}
-
-                    {/* Label */}
-                    <span className="text-[13px] font-medium tracking-wide">
-                      {item.label}
-                    </span>
-                  </Link>
-                </Magnetic>
-              );
-            })}
-          </div>
-        </nav>
-
-        {/* ── Right side: CTA + mobile toggle ── */}
-        <div className="flex items-center gap-3">
-          {/* Hire / Contact CTA — desktop only */}
-          <Magnetic strength={0.2}>
-            <Link
-              href="#contact"
-              data-cursor-label="✉"
-              className={cn(
-                "hidden items-center gap-1.5 rounded-full border border-[#8a5a52]/40 bg-[#8a5a52]/8 px-4 py-2 text-[13px] font-semibold text-[#8a5a52] transition-all duration-200 md:flex",
-                "hover:border-[#8a5a52] hover:bg-[#8a5a52] hover:text-bg"
-              )}
-            >
-              <span>Hire me</span>
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
-          </Magnetic>
-
-          {/* Mobile hamburger */}
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.88 }}
-            onClick={() => setMobileOpen((open) => !open)}
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileOpen}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-bg-elevated shadow-sm md:hidden"
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              {mobileOpen ? (
-                <motion.span
-                  key="close"
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: easeOutExpo }}
-                  className="flex"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="menu"
-                  initial={{ rotate: 90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: easeOutExpo }}
-                  className="flex"
-                >
-                  <Menu className="h-4 w-4" aria-hidden="true" />
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
-        </div>
-      </Container>
-
-      {/* ── Mobile drawer ── */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            transition={{ duration: 0.25, ease: easeOutExpo }}
-            className="mx-4 mt-2 overflow-hidden rounded-2xl border border-border bg-bg-elevated shadow-[0_8px_32px_rgba(45,36,32,0.1)] md:hidden"
-          >
-            <div className="flex flex-col p-2">
-              {NAV_ITEMS.map((item, i) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, ease: easeOutExpo, delay: i * 0.04 }}
-                >
-                  <Link
-                    href={`#${item.id}`}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "group relative flex items-center gap-3 rounded-xl px-4 py-3 transition-colors",
-                      activeId === item.id
-                        ? "text-bg"
-                        : "text-text-secondary hover:text-text-primary"
-                    )}
-                  >
-                    {activeId === item.id && (
-                      <motion.span
-                        layoutId="nav-active-pill-mobile"
-                        transition={pillTransition}
-                        className="absolute inset-0 -z-10 rounded-xl bg-[#8a5a52]"
-                      />
-                    )}
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </Link>
-                </motion.div>
-              ))}
-
-              <div className="mt-2 border-t border-border pt-2">
-                <Link
-                  href="#contact"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-[#8a5a52] px-4 py-3 text-sm font-semibold text-bg transition-opacity hover:opacity-90"
-                >
-                  <span>Hire me</span>
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.header>
+      </div>
+    </motion.aside>
   );
 }
 

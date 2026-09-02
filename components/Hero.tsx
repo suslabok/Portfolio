@@ -235,7 +235,7 @@ export function Hero() {
         parallaxHandlers.onMouseLeave?.();
         heroTilt.handlers.onMouseLeave();
       }}
-      className="relative isolate overflow-hidden pt-24 pb-10 sm:pt-32 sm:pb-14"
+      className="relative isolate overflow-hidden pt-20 pb-10 sm:pt-16 sm:pb-14"
     >
       <motion.div
         aria-hidden="true"
