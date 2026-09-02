@@ -146,22 +146,67 @@ export function CornerBrackets({ className, toneClassName }: CornerBracketsProps
   );
 }
 
-export function LogoMark() {
+/**
+ * Replace the existing `LogoMark` function in components/UI.tsx with this version.
+ * Fix: the old version used a large negative margin (-mr-3 / -mr-1.5) to overlap the
+ * "S" and "A" glyphs, which fused them into an unreadable blob. This version keeps
+ * the letters side by side (readable) and still cuts the full name across the
+ * vertical middle as a paper-strip label.
+ */
+
+interface LogoMarkProps {
+  /** Scales the whole mark down for tight spaces like the sidebar dock. */
+  compact?: boolean;
+  /** Accent color for the letters + name text. Defaults to maroon. */
+  color?: string;
+}
+
+export function LogoMark({ compact = false, color = "#8a5a52" }: LogoMarkProps) {
+  if (compact) {
+    return (
+      <div className="relative inline-flex h-14 w-16 select-none items-center justify-center">
+        {/* Big S A letters — sit side by side, no overlap */}
+        <motion.span
+          className="absolute inset-0 flex items-center justify-center gap-0.5 font-serif text-3xl font-bold tracking-tight"
+          style={{ color }}
+          aria-hidden="true"
+          animate={{ opacity: [0.92, 1, 0.92] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <span>S</span>
+          <span>A</span>
+        </motion.span>
+
+        {/* Name cut across the middle of the letters */}
+        <span
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap bg-[#f7f2e9] px-1 py-[1px] font-mono text-[5.5px] font-medium uppercase leading-none tracking-[0.03em] shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+          style={{ color }}
+        >
+          Sushma Acharya
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="relative inline-flex h-16 w-40 items-center justify-center select-none">
-      {/* Big S A letters */}
+    <div className="relative inline-flex h-16 w-44 select-none items-center justify-center">
+      {/* Big S A letters — sit side by side, no overlap */}
       <motion.span
-        className="absolute inset-0 flex items-center justify-center font-serif text-7xl font-bold tracking-tighter text-[#8a5a52]"
+        className="absolute inset-0 flex items-center justify-center gap-1 font-serif text-7xl font-bold tracking-tight"
+        style={{ color }}
         aria-hidden="true"
         animate={{ opacity: [0.92, 1, 0.92] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       >
-        <span className="-mr-3">S</span>
+        <span>S</span>
         <span>A</span>
       </motion.span>
 
-      {/* Name cut into the middle of the letters */}
-      <span className="absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap bg-bg px-1.5 py-0.5 font-sans text-[11px] font-medium tracking-tight text-[#8a5a52]">
+      {/* Name cut across the middle of the letters */}
+      <span
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap bg-bg px-1.5 py-0.5 font-sans text-[11px] font-medium tracking-tight"
+        style={{ color }}
+      >
         Sushma Acharya
       </span>
     </div>
@@ -175,11 +220,6 @@ interface MarkerHighlightProps {
   delay?: number;
 }
 
-/**
- * The yellow highlighter behind every section heading, but drawn on —
- * scales in left-to-right like a real marker stroke — the first time it
- * scrolls into view, instead of just being there as static CSS.
- */
 export function MarkerHighlight({ children, className, delay = 0.2 }: MarkerHighlightProps) {
   return (
     <span className={cn("marker-highlight relative inline-block", className)}>

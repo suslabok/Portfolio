@@ -72,10 +72,10 @@ function DockTooltip({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Pinned Polaroid photo — the dock's brand mark / "home" shortcut. */
+/** Pinned Polaroid photo — sits above the logo mark. */
 function DockBrand() {
   return (
-    <Link href="#home" data-cursor-label="HOME" className="group relative mb-1 mt-3 flex items-center justify-center">
+    <Link href="#home" data-cursor-label="HOME" className="group relative mt-3 flex items-center justify-center">
       <div className="sidebar-pin" aria-hidden="true" />
       <motion.div
         whileHover={{ rotate: 0, scale: 1.06 }}
@@ -85,6 +85,36 @@ function DockBrand() {
       >
         <Image src="/images/profile.jpg" alt="Sushma Acharya" fill sizes="48px" className="object-cover" />
       </motion.div>
+      <DockTooltip>Sushma Acharya</DockTooltip>
+    </Link>
+  );
+}
+
+/** "S A" monogram logo mark — sits below the pinned photo. Letters stay side by side (legible), name cuts across the middle. */
+function DockLogoMark() {
+  return (
+    <Link
+      href="#home"
+      data-cursor-label="HOME"
+      aria-label="Sushma Acharya — Home"
+      className="group relative mb-1 mt-2 flex h-14 w-16 select-none items-center justify-center"
+    >
+      <motion.span
+        aria-hidden="true"
+        className="absolute inset-0 flex items-center justify-center gap-0.5 font-serif text-3xl font-bold tracking-tight text-[#8a5a52]"
+        initial={{ opacity: 0.92 }}
+        animate={{ opacity: [0.92, 1, 0.92] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <span>S</span>
+        <span>A</span>
+      </motion.span>
+
+      {/* Name cut across the middle of the letters */}
+      <span className="absolute left-1/2 top-[50%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-sm bg-[#f7f2e9] px-1 py-[1px] font-mono text-[5.5px] font-medium uppercase leading-none tracking-[0.03em] text-[#8a5a52] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
+        Sushma Acharya
+      </span>
+
       <DockTooltip>Sushma Acharya</DockTooltip>
     </Link>
   );
@@ -119,13 +149,13 @@ function DockNavList({ activeId, layoutIdPrefix }: DockNavListProps) {
               />
             )}
             {!isActive && (
-              <span className="absolute inset-0 rounded-2xl bg-white/0 transition-colors duration-200 group-hover:bg-white/10" />
+              <span className="absolute inset-0 rounded-2xl bg-text-primary/0 transition-colors duration-200 group-hover:bg-text-primary/8" />
             )}
 
             <Icon
               className={cn(
                 "relative h-5 w-5 transition-colors",
-                isActive ? "text-white" : "text-white/55 group-hover:text-white/90"
+                isActive ? "text-white" : "text-text-primary/55 group-hover:text-text-primary/90"
               )}
               strokeWidth={2}
               aria-hidden="true"
@@ -138,7 +168,7 @@ function DockNavList({ activeId, layoutIdPrefix }: DockNavListProps) {
   );
 }
 
-/** Fixed, narrow floating icon dock — true dark glass, always on. Replaces the top navbar. */
+/** Fixed, narrow floating icon dock — frosted transparent glass, always on. Replaces the top navbar. */
 export function Sidebar() {
   const activeId = useActiveSection(IDS);
 
@@ -147,11 +177,12 @@ export function Sidebar() {
       initial={{ x: -30, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: easeOutExpo }}
-      className="glass-dock fixed left-3 top-1/2 z-40 flex w-[84px] -translate-y-1/2 flex-col items-center rounded-[32px] py-3 sm:left-4 sm:w-[92px]"
+      className="glass-dock fixed left-3 top-1/2 z-40 flex w-[96px] -translate-y-1/2 flex-col items-center rounded-[32px] py-3 sm:left-4 sm:w-[104px]"
     >
       <DockBrand />
+      <DockLogoMark />
 
-      <div className="mx-3 mb-1 mt-2 h-px w-6 bg-white/15" />
+      <div className="mx-3 mb-1 mt-1 h-px w-6 bg-text-primary/15" />
 
       <DockNavList activeId={activeId} layoutIdPrefix="dock" />
 
@@ -161,7 +192,7 @@ export function Sidebar() {
             href="#contact"
             data-cursor-label="✉"
             aria-label="Hire me"
-            className="group relative flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/8 text-white/80 transition-all duration-200 hover:border-white/35 hover:bg-white/16 hover:text-white"
+            className="group relative flex h-12 w-12 items-center justify-center rounded-2xl border border-text-primary/15 bg-text-primary/5 text-text-primary/70 transition-all duration-200 hover:border-text-primary/30 hover:bg-text-primary/10 hover:text-text-primary"
           >
             <ArrowUpRight className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
             <DockTooltip>Hire me</DockTooltip>
