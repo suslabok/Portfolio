@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef } from "react";
 import {
   motion,
   useMotionTemplate,
@@ -15,6 +14,7 @@ import {
   Cpu,
   Palette,
   Sparkles,
+  MapPin,
 } from "lucide-react";
 
 import {
@@ -26,8 +26,9 @@ import {
 } from "@/components/UI";
 
 import { Reveal } from "@/components/Animations";
-import { personal, strengths } from "@/lib/data";
-import { fadeUp, staggerContainer, tokenReveal } from "@/lib/motion";
+import { personal } from "@/lib/data";
+import { fadeUp, tokenReveal } from "@/lib/motion";
+import { useRef, useState, useEffect } from "react";
 import { useReducedMotion, useFinePointer } from "@/lib/hooks";
 
 export function About() {
@@ -188,9 +189,6 @@ export function About() {
             {/* Main content — text on the LEFT, avatar on the RIGHT */}
             <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr]">
 
-              {/* =========================================
-                  ABOUT TEXT (now first / left)
-              ========================================= */}
               <motion.div
                 variants={fadeUp}
                 className="relative z-10 order-2 lg:order-1"
@@ -224,9 +222,6 @@ export function About() {
                 </motion.div>
               </motion.div>
 
-              {/* =========================================
-                  AVATAR + FLOATING TECH ICONS (now second / right)
-              ========================================= */}
               <motion.div
                 initial={{
                   opacity: 0,
@@ -273,15 +268,6 @@ export function About() {
                   aria-hidden="true"
                   className="absolute left-1/2 top-1/2 h-[280px] w-[270px] -translate-x-1/2 -translate-y-1/2 rotate-[-3deg] rounded-[45%] border-2 border-accent-pink/20 bg-accent-amber/10"
                 />
-
-                {/* =====================================
-                    AVATAR IMAGE
-                    NOTE: new avatar is a full-body illustration,
-                    so we use object-contain (not cover) so the
-                    whole character shows instead of being cropped,
-                    and drop the frame's opaque background so the
-                    image's own background blends in.
-                ===================================== */}
                 <motion.div
                   className="absolute left-1/2 top-1/2 z-10 h-[330px] w-[265px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[45%] border-2 border-white/50 bg-[#f4e8d8] shadow-[0_25px_70px_rgba(60,40,35,0.18)]"
                   whileHover={
@@ -311,9 +297,6 @@ export function About() {
                   />
                 </motion.div>
 
-                {/* =====================================
-                    FLOATING ICON 1 — CODE
-                ===================================== */}
                 <FloatingIcon
                   className="left-2 top-12 rotate-[-10deg]"
                   delay={0}
@@ -322,9 +305,7 @@ export function About() {
                   <Code2 size={26} strokeWidth={2.2} />
                 </FloatingIcon>
 
-                {/* =====================================
-                    FLOATING ICON 2 — BRACES
-                ===================================== */}
+
                 <FloatingIcon
                   className="right-2 top-20 rotate-[8deg]"
                   delay={0.6}
@@ -333,9 +314,6 @@ export function About() {
                   <Braces size={25} strokeWidth={2.2} />
                 </FloatingIcon>
 
-                {/* =====================================
-                    FLOATING ICON 3 — DATABASE
-                ===================================== */}
                 <FloatingIcon
                   className="left-0 top-[45%] rotate-[7deg]"
                   delay={1.2}
@@ -344,9 +322,6 @@ export function About() {
                   <Database size={25} strokeWidth={2.2} />
                 </FloatingIcon>
 
-                {/* =====================================
-                    FLOATING ICON 4 — GLOBE
-                ===================================== */}
                 <FloatingIcon
                   className="right-0 top-[43%] rotate-[-8deg]"
                   delay={1.8}
@@ -355,9 +330,6 @@ export function About() {
                   <Globe2 size={25} strokeWidth={2.2} />
                 </FloatingIcon>
 
-                {/* =====================================
-                    FLOATING ICON 5 — CPU
-                ===================================== */}
                 <FloatingIcon
                   className="left-8 bottom-12 rotate-[-8deg]"
                   delay={2.2}
@@ -366,9 +338,7 @@ export function About() {
                   <Cpu size={24} strokeWidth={2.2} />
                 </FloatingIcon>
 
-                {/* =====================================
-                    FLOATING ICON 6 — DESIGN
-                ===================================== */}
+
                 <FloatingIcon
                   className="right-8 bottom-14 rotate-[9deg]"
                   delay={2.8}
@@ -376,10 +346,6 @@ export function About() {
                 >
                   <Palette size={24} strokeWidth={2.2} />
                 </FloatingIcon>
-
-                {/* =====================================
-                    SPARKLE
-                ===================================== */}
                 <motion.div
                   aria-hidden="true"
                   className="absolute right-[18%] top-[5%] z-20 text-accent-pink"
@@ -405,9 +371,6 @@ export function About() {
 
                 <div className="absolute right-[13%] bottom-[30%] z-20 h-2.5 w-2.5 rounded-full bg-accent-pink shadow-sm" />
 
-                {/* =====================================
-                    HELLO / BUILDER STICKER
-                ===================================== */}
                 <motion.div
                   className="absolute bottom-3 left-1/2 z-30 -translate-x-1/2 rotate-[-3deg] whitespace-nowrap rounded-full border border-accent-pink/30 bg-[#fff8eb] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent-pink shadow-md"
                   animate={
@@ -432,63 +395,44 @@ export function About() {
             </div>
           </motion.div>
 
-          {/* Scroll indicator */}
-          <motion.div
-            variants={fadeUp}
-            className="text-caption flex items-center gap-2 pt-2"
-          >
-            <span className="inline-block h-px w-8 bg-border-strong" />
+<motion.div
+  variants={fadeUp}
+  className="flex flex-col items-center justify-between gap-6 pt-6 sm:flex-row sm:gap-4"
+>
+  <motion.span
+    whileHover={{
+      y: -3,
+      scale: 1.03,
+    }}
+    transition={{
+      type: "spring",
+      stiffness: 400,
+      damping: 18,
+    }}
+    className="group/chip relative flex shrink-0 cursor-default items-center gap-2 rounded-full border-2 border-border bg-bg-elevated px-4 py-1.5 text-xs font-medium text-text-secondary shadow-sm transition-colors hover:border-accent-pink/60 hover:text-accent-pink"
+  >
+    <MapPin size={14} strokeWidth={2.2} className="text-accent-amber" />
+    Bhaktapur, Nepal
+  </motion.span>
 
-            scroll
+  {/* Quote — center */}
+  <div className="flex items-center justify-center gap-2 order-first sm:order-none">
+    <span className="text-accent-pink">✦</span>
+    <p className="font-mono text-sm italic tracking-wide text-text-secondary">
+      <TypewriterText text="always learning, always building" />
+    </p>
+    <span className="text-accent-pink">✦</span>
+  </div>
 
-            <span className="inline-block h-px w-8 bg-border-strong" />
-
-          </motion.div>
-
-          {/* Strengths */}
-          <motion.div
-            variants={staggerContainer(0.05)}
-            initial="hidden"
-            whileInView="show"
-            viewport={{
-              once: true,
-              margin: "-60px",
-            }}
-            className="flex flex-wrap gap-2 pt-1"
-          >
-            {strengths.map((strength, i) => (
-              <motion.span
-                key={strength}
-                variants={fadeUp}
-                whileHover={{
-                  y: -4,
-                  scale: 1.05,
-                  rotate: i % 2 ? -1.2 : 1.2,
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 400,
-                  damping: 18,
-                }}
-                className="group/chip relative cursor-default rounded-full border-2 border-border bg-bg-elevated px-4 py-1.5 text-xs font-medium text-text-secondary shadow-sm transition-colors hover:border-accent-pink/60 hover:text-accent-pink"
-              >
-                <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-gradient-aurora" />
-
-                {strength}
-              </motion.span>
-            ))}
-          </motion.div>
-
-          {/* Resume button */}
-          <motion.div variants={fadeUp} className="pt-2">
-            <Button
-              href={personal.resumeUrl}
-              cursorLabel="RESUME"
-              download
-            >
-              Download Resume
-            </Button>
-          </motion.div>
+  {/* Resume — right */}
+  <Button
+    href={personal.resumeUrl}
+    cursorLabel="RESUME"
+    download
+  >
+    Download Resume
+  </Button>
+</motion.div>
 
         </Reveal>
       </Container>
@@ -496,9 +440,6 @@ export function About() {
   );
 }
 
-/* =====================================================
-   FLOATING ICON COMPONENT
-===================================================== */
 
 function FloatingIcon({
   children,
@@ -560,5 +501,51 @@ function FloatingIcon({
     >
       {children}
     </motion.div>
+  );
+}
+
+function TypewriterText({ text }: { text: string }) {
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
+  const reducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (reducedMotion) {
+      setDisplayed(text);
+      setDone(true);
+      return;
+    }
+
+    let i = 0;
+    setDisplayed("");
+    setDone(false);
+
+    const interval = setInterval(() => {
+      i += 1;
+      setDisplayed(text.slice(0, i));
+
+      if (i >= text.length) {
+        clearInterval(interval);
+        setDone(true);
+      }
+    }, 45);
+
+    return () => clearInterval(interval);
+  }, [text, reducedMotion]);
+
+  return (
+    <span className="inline-flex items-center">
+      {displayed}
+      <motion.span
+        aria-hidden="true"
+        className="ml-0.5 inline-block h-[1em] w-[2px] translate-y-[1px] bg-text-secondary"
+        animate={done ? { opacity: [1, 0, 1] } : { opacity: 1 }}
+        transition={
+          done
+            ? { duration: 1, repeat: Infinity, ease: "linear" }
+            : { duration: 0 }
+        }
+      />
+    </span>
   );
 }

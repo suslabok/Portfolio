@@ -235,39 +235,42 @@ export function Hero() {
         parallaxHandlers.onMouseLeave?.();
         heroTilt.handlers.onMouseLeave();
       }}
-      className="relative isolate overflow-hidden pt-20 pb-10 sm:pt-16 sm:pb-14"
+      className="relative isolate pt-20 pb-10 sm:pt-16 sm:pb-14"
     >
-      <motion.div
-        aria-hidden="true"
-        className="hero-blob absolute -left-24 top-24 h-72 w-72 opacity-20 sm:h-96 sm:w-96"
-        style={{
-          background: "var(--color-accent-violet)",
-          x: blobSpringX,
-          y: blobSpringY,
-        }}
-        animate={reducedMotion ? undefined : { scale: [1, 1.05, 0.98, 1] }}
-        transition={reducedMotion ? undefined : { duration: 22, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        aria-hidden="true"
-        className="hero-blob-2 absolute right-[-5%] top-56 h-60 w-60 opacity-15 sm:h-80 sm:w-80"
-        style={{
-          background: "var(--color-accent-cyan)",
-          x: blob2X,
-          y: blob2Y,
-        }}
-        animate={reducedMotion ? undefined : { scale: [1, 0.96, 1.06, 1] }}
-        transition={reducedMotion ? undefined : { duration: 26, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-      />
-      <motion.div
-        aria-hidden="true"
-        className="hero-blob-3 absolute left-[45%] bottom-0 h-56 w-56 opacity-15 sm:h-72 sm:w-72"
-        style={{ background: "var(--color-accent-amber)" }}
-        animate={reducedMotion ? undefined : { x: [0, 20, -20, 0], y: [0, -10, 15, 0], scale: [1, 1.04, 0.97, 1] }}
-        transition={reducedMotion ? undefined : { duration: 28, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-      />
+      {/* Decorative blobs — contained separately so they don't clip the draggable card */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <motion.div
+          aria-hidden="true"
+          className="hero-blob absolute -left-24 top-24 h-72 w-72 opacity-20 sm:h-96 sm:w-96"
+          style={{
+            background: "var(--color-accent-violet)",
+            x: blobSpringX,
+            y: blobSpringY,
+          }}
+          animate={reducedMotion ? undefined : { scale: [1, 1.05, 0.98, 1] }}
+          transition={reducedMotion ? undefined : { duration: 22, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          aria-hidden="true"
+          className="hero-blob-2 absolute right-[-5%] top-56 h-60 w-60 opacity-15 sm:h-80 sm:w-80"
+          style={{
+            background: "var(--color-accent-cyan)",
+            x: blob2X,
+            y: blob2Y,
+          }}
+          animate={reducedMotion ? undefined : { scale: [1, 0.96, 1.06, 1] }}
+          transition={reducedMotion ? undefined : { duration: 26, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        />
+        <motion.div
+          aria-hidden="true"
+          className="hero-blob-3 absolute left-[45%] bottom-0 h-56 w-56 opacity-15 sm:h-72 sm:w-72"
+          style={{ background: "var(--color-accent-amber)" }}
+          animate={reducedMotion ? undefined : { x: [0, 20, -20, 0], y: [0, -10, 15, 0], scale: [1, 1.04, 0.97, 1] }}
+          transition={reducedMotion ? undefined : { duration: 28, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        />
+      </div>
 
-      <Container className="relative z-10 grid grid-cols-1 items-center justify-between gap-12 md:grid-cols-[auto_auto] md:items-start">
+      <Container className="relative z-10 grid grid-cols-1 items-center justify-between gap-12 md:grid-cols-[auto_auto] md:items-center">
         <motion.div style={{ x, y }} className="relative order-1 md:order-1">
           <IdCard />
         </motion.div>
@@ -280,8 +283,7 @@ export function Hero() {
           className="order-2 flex max-w-3xl flex-col items-start gap-4 md:order-2"
         >
           <motion.p variants={tokenReveal} className="flex items-center gap-2 text-2xl text-neutral-600">
-            <span className="relative inline-flex h-3 w-3">
-            </span>
+            <span className="relative inline-flex h-3 w-3" />
             Hi, I am
           </motion.p>
           <motion.h1
