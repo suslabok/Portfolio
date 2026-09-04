@@ -8,18 +8,11 @@ export const personal = {
   phone: "+977 9840257870",
   linkedin: "https://www.linkedin.com/in/sushma-acharya-0a30b42b7/",
   github: "https://github.com/suslabok",
-  resumeUrl: "/Sushma_Acharya_Resume.pdf",
+  resumeUrl: "https://drive.google.com/file/d/1i1d2Pc3YyVNJJdT2pRczKi0lh_56maN2/view?usp=sharing",
 } as const;
 
 export const languages = ["English", "Nepali", "Hindi"] as const;
 export const roles = ["Developer", "Software Designer", "Happy Coding!","Creative Technologist"] as const;
-
-export const strengths = [
-  "Critical thinking",
-  "Adaptability",
-  "Team collaboration & leadership",
-  "Strategic planning & creativity",
-] as const;
 
 export const skills: string[] = [
   "JavaScript",
@@ -119,7 +112,7 @@ export const projects: Project[] = [
     title: "KaamLink",
     tagline: "Job Portal Web App",
     description:
-      "A full-stack job portal with separate backend and frontend modules for posting, browsing, and applying to jobs.",
+      "A full-stack job portal with separate job-seeker and recruiter workflows for browsing, posting, saving, and applying to jobs.",
     tech: ["JavaScript", "Node.js", "CSS"],
     repoUrl: "https://github.com/suslabok/Job-Portal-Kaam-Link",
     liveUrl: null,
