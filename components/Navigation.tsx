@@ -51,9 +51,9 @@ export function BackToTop() {
 const NAV_ITEMS = [
   { id: "home",     label: "Home",     icon: Home },
   { id: "about",    label: "About",    icon: UserRound },
-  { id: "skills",   label: "Stack",    icon: Layers },
+  { id: "journey",  label: "Journey",  icon: Milestone },
   { id: "projects", label: "Projects", icon: FolderKanban },
-    { id: "journey",  label: "Journey",  icon: Milestone },
+  { id: "skills",   label: "Stack",    icon: Layers },
   { id: "contact",  label: "Contact",  icon: Mail },
 ] as const;
 

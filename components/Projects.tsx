@@ -504,11 +504,11 @@ export function Projects() {
           <motion.div variants={fadeUp}>
             <TagLabel>projects</TagLabel>
           </motion.div>
-          <motion.h2
+            <motion.h2
             variants={tokenReveal}
-            className="inline-block w-fit -mt-1 text-5xl md:text-6xl leading-none"
+            className="inline-block w-fit -mt-2 text-6xl md:text-7xl leading-none"
           >
-            <MarkerHighlight>Things I&apos;ve <span className="shimmer-text">built</span></MarkerHighlight>
+            <MarkerHighlight>Things I&apos;ve <span className="scribble-underline">built</span> with</MarkerHighlight>
           </motion.h2>
           <motion.p variants={fadeUp} className="text-[15px] leading-relaxed text-text-secondary">
             From AI-powered platforms to 3D simulators click any card to read the full story.

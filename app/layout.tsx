@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono, Caveat } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import "./globals.css";
-import { AmbientBackground} from "@/components/Animations";
+import { AmbientBackground, CustomCursor } from "@/components/Animations";
 import { Sidebar, ScrollProgress, BackToTop } from "@/components/Navigation";
 
 const caveat = Caveat({
@@ -80,6 +80,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   
         <MotionConfig reducedMotion="user">
           <AmbientBackground />
+<CustomCursor />
           <ScrollProgress />
           <Sidebar />
           <div className="pl-[104px] sm:pl-[116px]">{children}</div>

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
-import { Container, TagLabel, MarkerHighlight } from "@/components/UI";
+import { Container, CornerBrackets, TagLabel, MarkerHighlight } from "@/components/UI";
 import { Reveal } from "@/components/Animations";
 import { education } from "@/lib/data";
 import { fadeUp, tokenReveal } from "@/lib/motion";
@@ -67,7 +67,7 @@ function EducationCard({
         </motion.div>
       </div>
 
-      {/* Card — left or right half */}
+      {/* Content — left or right half, solid maroon box */}
       <motion.div
         ref={cardRef}
         variants={fadeUp}
@@ -76,76 +76,48 @@ function EducationCard({
         viewport={{ once: true, margin: "-50px" }}
         onHoverStart={() => setHovered(true)}
         onHoverEnd={() => setHovered(false)}
-        whileHover={{ y: -6, rotate: isLeft ? -0.6 : 0.6 }}
+        whileHover={{ y: -4 }}
         transition={{ type: "spring", stiffness: 300, damping: 22 }}
-        className="journey-card group relative w-[calc(50%-3rem)] overflow-hidden rounded-3xl border-2 border-border-strong bg-bg-elevated p-6 sm:p-8"
-        style={{ boxShadow: hovered ? `0 16px 48px -12px ${meta.accentSoft}, 0 0 0 1.5px ${meta.accent}` : undefined }}
+        className="journey-card group relative w-[calc(50%-3rem)] rounded-3xl p-6 sm:p-8 shadow-lg"
+        style={{ background: meta.accent }}
       >
-        {/* Coloured top bar */}
-        <motion.div
-          className="absolute inset-x-0 top-0 h-1 rounded-t-3xl"
-          style={{ background: `linear-gradient(90deg, ${meta.accent}, #b98d76)` }}
-          initial={{ scaleX: 0, originX: "left" }}
-          animate={{ scaleX: hovered ? 1 : 0 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        />
-
-        {/* Tape decoration */}
-        <div
-          aria-hidden="true"
-          className="tape"
-          style={{
-            top: "-10px",
-            left: isLeft ? "auto" : "22px",
-            right: isLeft ? "22px" : "auto",
-            transform: `rotate(${isLeft ? "6deg" : "-7deg"})`,
-          }}
-        />
+        <CornerBrackets className="opacity-90 text-white" />
 
         {/* Badge + Period */}
         <div className="flex items-center justify-between gap-2 mb-4">
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest"
-            style={{ background: meta.accentSoft, color: meta.accent }}
-          >
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: meta.accent }} />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-bold uppercase tracking-widest text-white">
+            <span className="h-1.5 w-1.5 rounded-full bg-white" />
             {meta.badge}
           </span>
-          <span className="font-mono text-[11px] text-text-muted">{entry.period}</span>
+          <span className="font-mono text-sm text-white/70">{entry.period}</span>
         </div>
 
         {/* Degree */}
-        <h3 className="text-lg font-bold leading-snug text-text-primary mb-1">
-          <span className="marker-highlight inline-block px-0.5">{entry.degree}</span>
+        <h3 className="text-2xl font-bold leading-snug mb-1 text-white">
+          {entry.degree}
         </h3>
 
         {/* Institution + location */}
-        <p className="text-sm text-text-secondary font-medium">{entry.institution}</p>
-        <p className="text-[11px] text-text-muted mt-0.5 flex items-center gap-1">
+        <p className="text-base text-white/90 font-medium">{entry.institution}</p>
+        <p className="text-sm text-white/70 mt-0.5 flex items-center gap-1">
           <span>📍</span>{meta.location}
         </p>
 
         {/* Detail line */}
-        <p className="mt-2 text-[12px] text-text-muted italic">{meta.detail}</p>
+        <p className="mt-2 text-sm text-white/70 italic">{meta.detail}</p>
 
-        {/* Highlights grid */}
-        <div className="mt-4 flex flex-wrap gap-1.5">
-        
-        </div>
-
-        {/* GPA highlight */}
+        {/* GPA */}
         {entry.gpa && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
+          <motion.p
+            initial={{ opacity: 0, x: -6 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3, type: "spring", stiffness: 360, damping: 22 }}
-            className="absolute -bottom-3 -right-3 h-16 w-16 rounded-full flex flex-col items-center justify-center shadow-lg border-2 border-bg-elevated"
-            style={{ background: "linear-gradient(135deg, #8a5a52, #6b3d36)" }}
+            className="mt-3 inline-block rounded-full bg-white px-3 py-1 text-base font-bold"
+            style={{ color: meta.accent }}
           >
-            <span className="text-white font-bold text-sm leading-none">{entry.gpa}</span>
-            <span className="text-white text-[9px] opacity-80">GPA</span>
-          </motion.div>
+            ⭐ GPA {entry.gpa}
+          </motion.p>
         )}
       </motion.div>
     </div>
@@ -218,8 +190,8 @@ export function Journey() {
           </div>
         </div>
 
-        {/* ── Mobile stacked cards ── */}
-        <div className="flex flex-col gap-6 sm:hidden">
+        {/* ── Mobile stacked entries (no boxes) ── */}
+        <div className="flex flex-col gap-8 sm:hidden">
           {education.map((entry, index) => {
             const meta = ENTRY_META[index] ?? ENTRY_META[0];
             return (
@@ -229,32 +201,31 @@ export function Journey() {
                 initial="hidden"
                 whileInView="show"
                 viewport={{ once: true, margin: "-30px" }}
-                className="relative overflow-hidden rounded-2xl border-2 border-border-strong bg-bg-elevated p-5"
+                className="relative rounded-2xl p-5 shadow-lg"
+                style={{ background: meta.accent }}
               >
-                <div className="absolute inset-x-0 top-0 h-1 rounded-t-2xl"
-                  style={{ background: `linear-gradient(90deg, ${meta.accent}, #b98d76)` }} />
+                <CornerBrackets className="opacity-90 text-white" />
+
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="h-9 w-9 rounded-full flex items-center justify-center text-base shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${meta.accent}, #b98d76)` }}>
+                  <div className="h-9 w-9 rounded-full flex items-center justify-center text-base shrink-0 bg-white/15">
                     {meta.emoji}
                   </div>
                   <div>
-                    <span className="font-mono text-[10px] text-text-muted">{entry.period}</span>
-                    <p className="text-sm font-bold text-text-primary leading-snug">{entry.degree}</p>
+                    <span className="font-mono text-xs text-white/70">{entry.period}</span>
+                    <p className="text-lg font-bold leading-snug text-white">
+                      {entry.degree}
+                    </p>
                   </div>
                 </div>
-                <p className="text-sm text-text-secondary">{entry.institution}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-          
-                </div>
+                <p className="text-base text-white/90">{entry.institution}</p>
+                <p className="text-sm text-white/70 mt-0.5 flex items-center gap-1">
+                  <span>📍</span>{meta.location}
+                </p>
+                <p className="mt-1 text-sm text-white/70 italic">{meta.detail}</p>
                 {entry.gpa && (
                   <p
-                    className="mt-3 inline-flex items-center gap-2 rounded-full border px-2.5 py-0.5 text-[11px] font-bold"
-                    style={{
-                      borderColor: "rgba(138,90,82,0.4)",
-                      backgroundColor: "rgba(138,90,82,0.1)",
-                      color: "#8a5a52",
-                    }}
+                    className="mt-2 inline-block rounded-full bg-white px-3 py-1 text-base font-bold"
+                    style={{ color: meta.accent }}
                   >
                     ⭐ GPA {entry.gpa}
                   </p>

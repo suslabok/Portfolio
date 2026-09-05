@@ -754,3 +754,13 @@ section[id] {
   outline: 2px solid var(--color-accent-violet);
   outline-offset: 3px;
 }
+@media (pointer: fine) {
+  body {
+    cursor: none;
+  }
+  a,
+  button,
+  [role="button"] {
+    cursor: none;
+  }
+}
