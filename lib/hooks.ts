@@ -4,19 +4,14 @@ import { useEffect, useState } from "react";
 import type { MouseEvent } from "react";
 import { useMotionValue, useSpring } from "framer-motion";
 
-const RESPECT_REDUCED_MOTION =
-  process.env.NEXT_PUBLIC_RESPECT_REDUCED_MOTION === "true";
-
 export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(
     () =>
       typeof window !== "undefined" &&
-      RESPECT_REDUCED_MOTION &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
 
   useEffect(() => {
-    if (!RESPECT_REDUCED_MOTION) return;
 
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
     const legacyQuery = query as MediaQueryList & {
@@ -41,12 +36,6 @@ export function useReducedMotion(): boolean {
 
 const FINE_POINTER_QUERY = "(hover: hover) and (pointer: fine)";
 
-/**
- * True on devices with a mouse-like pointer (hover + fine precision).
- * Used to gate cursor-follow effects — custom cursor, parallax, tilt-by-
- * proximity — off on touch devices, where they either don't apply or would
- * just fire once on tap and stick.
- */
 export function useFinePointer(): boolean {
   const [fine, setFine] = useState(false);
 
@@ -97,11 +86,6 @@ interface UseParallaxOptions {
   damping?: number;
 }
 
-/**
- * Subtle cursor-follow translation for a single element within a larger
- * tracked area (e.g. the hero ID card drifting a few px opposite the
- * mouse). Disabled on touch devices and under prefers-reduced-motion.
- */
 export function useParallax({ strength = 16, stiffness = 60, damping = 20 }: UseParallaxOptions = {}) {
   const reducedMotion = useReducedMotion();
   const isFinePointer = useFinePointer();
@@ -149,12 +133,6 @@ export interface TiltState {
   };
 }
 
-/**
- * Mouse-position-driven 3D tilt with optional glare position, used by
- * project visuals, contact card, skill boxes, about cards, etc.
- * Animates only GPU-friendly `rotateX`/`rotateY` and exposes
- * normalized glare coordinates for a layered shine overlay.
- */
 export function useTilt({
   strength = 14,
   stiffness = 200,

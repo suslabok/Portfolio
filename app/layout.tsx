@@ -78,9 +78,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="grain min-h-full bg-bg font-sans text-text-primary">
   
-        <MotionConfig reducedMotion="never">
+        <MotionConfig reducedMotion="user">
           <AmbientBackground />
-          <CustomCursor />
           <ScrollProgress />
           <Sidebar />
           <div className="pl-[104px] sm:pl-[116px]">{children}</div>
