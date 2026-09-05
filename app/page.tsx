@@ -12,9 +12,9 @@ export default function Home() {
     <main className="relative">
       <Hero />
       <About />
-      <Journey />
       <Skills />
       <Projects />
+      <Journey />
       <Contact />
     </main>
   );

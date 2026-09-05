@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Check, Mail, FolderGit2, ExternalLink } from "lucide-react";
@@ -8,6 +9,8 @@ import { Container, TagLabel, MarkerHighlight, CornerBrackets, Magnetic } from "
 import { personal } from "@/lib/data";
 import { useTilt } from "@/lib/hooks";
 import { fadeUp, staggerContainer, tokenReveal, viewportOnce } from "@/lib/motion";
+
+const WEB3FORMS_ACCESS_KEY = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY ?? "";
 
 /** Big email display that copies to clipboard on click, with a mailto fallback below. */
 function EmailCTA() {
@@ -31,7 +34,7 @@ function EmailCTA() {
         data-cursor-label={copied ? "COPIED" : "COPY"}
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
-        className="group relative inline-flex flex-wrap items-center justify-center gap-3 text-center font-display text-2xl font-semibold text-text-primary transition-colors hover:text-accent-pink sm:text-4xl"
+        className="group relative inline-flex flex-wrap items-center justify-center gap-3 text-center font-display text-xl font-semibold text-text-primary transition-colors hover:text-accent-pink sm:text-2xl"
       >
         {personal.email}
 
@@ -182,6 +185,162 @@ function FloatingDoodle({
   );
 }
 
+/**
+ * Envelope flap overlay — draws the fold seams (two diagonal lines meeting
+ * at a center point) plus a faint shaded triangle so the top of the card
+ * reads as a folded envelope back rather than a plain rounded box.
+ * Clipped to the card's rounded top corners so it never spills outside.
+ */
+function EnvelopeFlap() {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-28 overflow-hidden rounded-t-[2rem] sm:h-36">
+      <svg
+        viewBox="0 0 400 140"
+        preserveAspectRatio="none"
+        className="h-full w-full"
+        aria-hidden="true"
+      >
+        {/* subtle fold shading */}
+        <polygon points="0,0 400,0 200,120" fill="#8a5a52" opacity="0.08" />
+        {/* fold seams */}
+        <line x1="2" y1="2" x2="200" y2="120" stroke="#8a5a52" strokeWidth="2" />
+        <line x1="398" y1="2" x2="200" y2="120" stroke="#8a5a52" strokeWidth="2" />
+      </svg>
+    </div>
+  );
+}
+
+type SubmitStatus = "idle" | "sending" | "success" | "error";
+
+function ContactForm() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<SubmitStatus>("idle");
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+
+    if (!WEB3FORMS_ACCESS_KEY) {
+      console.error(
+        "Missing NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY — add it to your .env.local and restart the dev server."
+      );
+      setStatus("error");
+      window.setTimeout(() => setStatus("idle"), 3000);
+      return;
+    }
+
+    setStatus("sending");
+
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          subject: `Portfolio message from ${name || "someone"}`,
+          from_name: name,
+          name,
+          email,
+          message,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setStatus("success");
+        setName("");
+        setEmail("");
+        setMessage("");
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    } finally {
+      window.setTimeout(() => setStatus("idle"), 3000);
+    }
+  }
+
+  const inputClasses =
+    "w-full rounded-xl border-2 border-border bg-bg px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition-colors focus:border-accent-violet focus:outline-none";
+
+  return (
+    <motion.form
+      variants={fadeUp}
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4"
+    >
+      <div className="mb-1 flex items-center gap-2">
+        <TagLabel>send a message</TagLabel>
+      </div>
+
+      <label className="flex flex-col gap-1.5 text-sm">
+        <span className="font-semibold text-text-primary">Name</span>
+        <input
+          type="text"
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Enter your name"
+          className={inputClasses}
+        />
+      </label>
+
+      <label className="flex flex-col gap-1.5 text-sm">
+        <span className="font-semibold text-text-primary">Email</span>
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="your@email.com"
+          className={inputClasses}
+        />
+      </label>
+
+      <label className="flex flex-col gap-1.5 text-sm">
+        <span className="font-semibold text-text-primary">Message</span>
+        <textarea
+          required
+          rows={5}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="What's on your mind?"
+          className={`${inputClasses} resize-none`}
+        />
+      </label>
+
+      <motion.button
+        type="submit"
+        disabled={status === "sending"}
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.97 }}
+        data-cursor-label="SEND"
+        className="mt-2 inline-flex items-center justify-center gap-2 self-start border-2 border-[#8a5a52] bg-[#8a5a52] px-6 py-3 text-sm font-bold tracking-wide text-white transition-all duration-200 ease-out hover:bg-[#75473f] hover:shadow-[4px_4px_0_#e8d34a] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {status === "sending"
+          ? "Sending…"
+          : status === "success"
+            ? "Sent! ✓"
+            : status === "error"
+              ? "Something went wrong — try again"
+              : "Send"}
+      </motion.button>
+
+      <span aria-live="polite" className="sr-only">
+        {status === "sending" && "Sending your message"}
+        {status === "success" && "Message sent successfully"}
+        {status === "error" && "There was an error sending your message"}
+      </span>
+    </motion.form>
+  );
+}
+
 export function Contact() {
   const { rotateX, rotateY, handlers } = useTilt({ strength: 8, stiffness: 150 });
 
@@ -203,50 +362,57 @@ export function Contact() {
       <Container className="relative">
         <motion.div
           {...handlers}
-          style={{ rotateX, rotateY, transformPerspective: 1000 }}
+          style={{ rotateX, rotateY, transformPerspective: 1000, border: "3px solid #8a5a52" }}
           variants={staggerContainer(0.12)}
           initial="hidden"
           whileInView="show"
           viewport={viewportOnce}
-          className="glass-elevated relative flex flex-col items-center gap-10 rounded-[2rem] px-6 py-16 text-center sm:px-16 sm:py-24"
+          className="glass-elevated relative grid grid-cols-1 gap-10 rounded-[2rem] !border-[3px] !border-solid !border-[#8a5a52] px-6 py-12 sm:px-10 sm:py-16 lg:grid-cols-2 lg:divide-x lg:divide-[#8a5a52]/40 lg:gap-x-0 lg:gap-y-10"
         >
           <CornerBrackets className="opacity-70" />
 
-          {/* Rotating "stamp" badge, like a wax seal in the corner */}
+          {/* Envelope fold seams across the top of the card */}
+          <EnvelopeFlap />
+
+          {/* Wax-seal badge, sitting at the tip of the flap */}
           <motion.div
             variants={fadeUp}
             animate={{ rotate: [0, -8, 0, 8, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            className="glass absolute -top-6 right-6 hidden h-16 w-16 rotate-6 items-center justify-center rounded-full text-2xl sm:flex"
+            className="glass absolute left-1/2 top-20 z-10 hidden h-16 w-16 -translate-x-1/2 items-center justify-center rounded-full border-2 border-[#8a5a52]/40 text-2xl shadow-[0_4px_14px_rgba(138,90,82,0.25)] sm:top-28 sm:flex"
           >
             👋
           </motion.div>
 
-          <motion.div variants={fadeUp}>
+          <motion.div variants={fadeUp} className="relative z-10 flex justify-center pt-2 sm:pt-3 lg:col-span-2">
             <TagLabel>contact</TagLabel>
           </motion.div>
 
-          <motion.h2
-            variants={tokenReveal}
-            className="text-display-1 max-w-2xl text-balance"
-          >
-            Let&apos;s build{" "}
-            <MarkerHighlight className="inline-block px-1">something</MarkerHighlight>{" "}
-            together
-          </motion.h2>
+          <div className="relative z-10 flex flex-col justify-center lg:pr-10">
+            <ContactForm />
+          </div>
 
-          <motion.p variants={fadeUp} className="text-body-lg max-w-md">
-            Whether it&apos;s a project, an opportunity, or just to talk tech
-            my inbox is open.
-          </motion.p>
+          <div className="relative z-10 flex flex-col items-center justify-center gap-10 text-center lg:pl-10">
+            <motion.h2
+              variants={tokenReveal}
+              className="text-display-1 max-w-2xl text-balance !text-4xl sm:!text-5xl"
+            >
+              And that&apos;s a{" "}
+              <MarkerHighlight className="inline-block px-1">wrap</MarkerHighlight>.
+            </motion.h2>
 
-          <motion.div variants={fadeUp}>
-            <EmailCTA />
-          </motion.div>
+            <motion.p variants={fadeUp} className="text-body-lg max-w-md">
+              Feel free to reach out. I&apos;d love to connect and collaborate.
+            </motion.p>
 
-          <motion.div variants={fadeUp}>
-            <SocialLinks />
-          </motion.div>
+            <motion.div variants={fadeUp}>
+              <EmailCTA />
+            </motion.div>
+
+            <motion.div variants={fadeUp}>
+              <SocialLinks />
+            </motion.div>
+          </div>
         </motion.div>
       </Container>
     </section>

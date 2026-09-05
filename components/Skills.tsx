@@ -82,7 +82,6 @@ interface FloatingToolProps {
 }
 
 function FloatingTool({ label, index, containerRef, onOpen }: FloatingToolProps) {
-  const reducedMotion = useReducedMotion();
   const [isActive, setIsActive] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
@@ -114,7 +113,7 @@ function FloatingTool({ label, index, containerRef, onOpen }: FloatingToolProps)
       whileHover={{ scale: 1.14 }}
       whileDrag={{ scale: 1.2, zIndex: 30 }}
       animate={
-        reducedMotion || isPinned
+        isPinned
           ? undefined
           : {
               y: [0, -driftY, 0, driftY * 0.4, 0],
@@ -123,7 +122,7 @@ function FloatingTool({ label, index, containerRef, onOpen }: FloatingToolProps)
             }
       }
       transition={
-        reducedMotion || isPinned
+        isPinned
           ? undefined
           : {
               duration,

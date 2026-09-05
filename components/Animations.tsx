@@ -1,11 +1,6 @@
 "use client";
 
 import type { HTMLMotionProps } from "framer-motion";
-
-export type RevealProps = HTMLMotionProps<"div"> & {
-  stagger?: number;
-  delayChildren?: number;
-};
 import {
   AnimatePresence,
   motion,
@@ -17,12 +12,17 @@ import {
 import { cursorSpring, easeOutExpo, easeOutQuart, staggerContainer, viewportOnce } from "@/lib/motion";
 import { useReducedMotion, useFinePointer } from "@/lib/hooks";
 
+export type RevealProps = HTMLMotionProps<"div"> & {
+  stagger?: number;
+  delayChildren?: number;
+};
+
 export function AmbientBackground() {
   const reducedMotion = useReducedMotion();
 
   return (
     <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden bg-bg">
-      <div className="grid-overlay absolute inset-0 opacity-50" />
+      <div className="grid-overlay absolute inset-0 opacity-80" />
 
       <motion.div
         className="absolute -left-[10%] top-[-15%] h-[520px] w-[520px] rounded-full opacity-[0.16] blur-[120px]"

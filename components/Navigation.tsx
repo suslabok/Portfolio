@@ -4,11 +4,12 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence, useScroll, useSpring, useMotionValueEvent } from "framer-motion";
-import { ArrowUpRight, ArrowUp, Home, UserRound, Milestone, Layers, FolderKanban, Mail } from "lucide-react";
+import { ArrowUp, Download, Home, UserRound, Milestone, Layers, FolderKanban, Mail } from "lucide-react";
 import { Magnetic } from "@/components/UI";
 import { useActiveSection } from "@/lib/hooks";
 import { easeOutExpo } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { personal } from "@/lib/data";
 
 /** Floating scroll-to-top button — fades and pops in once you're a screen past the hero. */
 export function BackToTop() {
@@ -50,9 +51,9 @@ export function BackToTop() {
 const NAV_ITEMS = [
   { id: "home",     label: "Home",     icon: Home },
   { id: "about",    label: "About",    icon: UserRound },
-  { id: "journey",  label: "Journey",  icon: Milestone },
   { id: "skills",   label: "Stack",    icon: Layers },
   { id: "projects", label: "Projects", icon: FolderKanban },
+    { id: "journey",  label: "Journey",  icon: Milestone },
   { id: "contact",  label: "Contact",  icon: Mail },
 ] as const;
 
@@ -189,13 +190,15 @@ export function Sidebar() {
       <div className="mb-1 mt-1 flex items-center justify-center">
         <Magnetic strength={0.15}>
           <Link
-            href="#contact"
-            data-cursor-label="✉"
-            aria-label="Hire me"
+            href={personal.resumeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-cursor-label="↓"
+            aria-label="Download resume"
             className="group relative flex h-12 w-12 items-center justify-center rounded-2xl border border-text-primary/15 bg-text-primary/5 text-text-primary/70 transition-all duration-200 hover:border-text-primary/30 hover:bg-text-primary/10 hover:text-text-primary"
           >
-            <ArrowUpRight className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-            <DockTooltip>Hire me</DockTooltip>
+            <Download className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+            <DockTooltip>Download Resume</DockTooltip>
           </Link>
         </Magnetic>
       </div>

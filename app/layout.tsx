@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono, Caveat } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import "./globals.css";
-import { AmbientBackground, CustomCursor } from "@/components/Animations";
+import { AmbientBackground} from "@/components/Animations";
 import { Sidebar, ScrollProgress, BackToTop } from "@/components/Navigation";
 
 const caveat = Caveat({

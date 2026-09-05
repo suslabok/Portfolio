@@ -12,7 +12,7 @@ import {
 } from "framer-motion";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
-import { Container, Button, MarkerHighlight } from "@/components/UI";
+import { Container, MarkerHighlight } from "@/components/UI";
 import { personal, roles } from "@/lib/data";
 import { staggerContainer, tokenReveal, scrapbookWord, easeOutExpo } from "@/lib/motion";
 import { useParallax, useReducedMotion, useFinePointer } from "@/lib/hooks";
@@ -282,13 +282,13 @@ export function Hero() {
           animate="show"
           className="order-2 flex max-w-3xl flex-col items-start gap-4 md:order-2"
         >
-          <motion.p variants={tokenReveal} className="flex items-center gap-2 text-2xl text-neutral-600">
+          <motion.p variants={tokenReveal} className="flex items-center gap-2 text-3xl text-neutral-600">
             <span className="relative inline-flex h-3 w-3" />
             Hi, I am
           </motion.p>
           <motion.h1
             variants={staggerContainer(0.09, 0)}
-            className="-mt-2 text-6xl md:text-7xl leading-none"
+            className="-mt-2 text-7xl md:text-8xl leading-none"
           >
             <MarkerHighlight delay={0.5}>
               <motion.span variants={scrapbookWord(0)} className="inline-block">
@@ -306,30 +306,52 @@ export function Hero() {
 
           <motion.p
             variants={tokenReveal}
-            className="text-body-lg max-w-xl text-balance text-neutral-600"
+            className="text-xl md:text-2xl max-w-xl text-balance text-neutral-600"
           >
             <span className="marker-highlight inline-block px-1">{personal.role}</span>{" "}
             at Kathmandu University
           </motion.p>
           <motion.p
             variants={tokenReveal}
-            className="text-body-lg max-w-xl text-balance text-neutral-600"
+            className="text-xl md:text-2xl max-w-xl text-balance text-neutral-600"
           >
             Building <span className="font-semibold text-accent-pink">apps</span>,
             {" "}<span className="font-semibold text-accent-cyan">AI-powered tooling</span>, and{" "}
             <span className="font-semibold text-accent-violet">interactive 3D experiences</span>.
           </motion.p>
 
+
           <motion.div
             variants={tokenReveal}
-            className="mt-2 flex flex-wrap items-center gap-4"
+            className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold uppercase tracking-wider text-neutral-500"
           >
-            <Button href="#projects" cursorLabel="VIEW">
-              View Projects
-            </Button>
-            <Button href="#contact" variant="secondary" cursorLabel="SAY HI">
-              Get in Touch
-            </Button>
+            <a
+              href={`mailto:${personal.email}`}
+              data-cursor-label="EMAIL"
+              className="underline decoration-2 decoration-transparent underline-offset-4 transition-colors hover:text-accent-violet hover:decoration-accent-violet"
+            >
+              Email
+            </a>
+            <span className="text-neutral-300" aria-hidden="true">·</span>
+            <a
+              href={personal.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-cursor-label="GITHUB"
+              className="underline decoration-2 decoration-transparent underline-offset-4 transition-colors hover:text-accent-violet hover:decoration-accent-violet"
+            >
+              GitHub
+            </a>
+            <span className="text-neutral-300" aria-hidden="true">·</span>
+            <a
+              href={personal.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-cursor-label="LINKEDIN"
+              className="underline decoration-2 decoration-transparent underline-offset-4 transition-colors hover:text-accent-violet hover:decoration-accent-violet"
+            >
+              LinkedIn
+            </a>
           </motion.div>
         </motion.div>
       </Container>
