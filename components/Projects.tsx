@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -9,8 +9,16 @@ import {
   useMotionTemplate,
   useMotionValue,
   useSpring,
+  type PanInfo,
 } from "framer-motion";
-import { ExternalLink, FolderGit2, ArrowUpRight, X, Terminal } from "lucide-react";
+import {
+  ExternalLink,
+  FolderGit2,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Terminal,
+} from "lucide-react";
 import { Container, TagLabel, MarkerHighlight } from "@/components/UI";
 import { Reveal } from "@/components/Animations";
 import { useReducedMotion } from "@/lib/hooks";
@@ -19,13 +27,7 @@ import { projects } from "@/lib/data";
 import type { Project } from "@/lib/data";
 import { fadeUp, tokenReveal, easeOutExpo, easeOutQuart } from "@/lib/motion";
 
-interface ProjectRowProps {
-  project: Project;
-  index: number;
-  onOpen: (project: Project) => void;
-}
-
-/** Per-row accent colour pairs for glow + bar */
+/** Per-project accent colour pairs for glow + bar, keyed by index in `projects`. */
 const ACCENTS: [string, string][] = [
   ["var(--color-accent-violet)", "var(--color-accent-pink)"],
   ["var(--color-accent-cyan)",   "var(--color-accent-amber)"],
@@ -34,32 +36,71 @@ const ACCENTS: [string, string][] = [
   ["var(--color-accent-violet)", "var(--color-accent-amber)"],
 ];
 
-/** Full-width row — image and content alternate sides on every other project. */
-function ProjectRow({ project, index, onOpen }: ProjectRowProps) {
+const CARD_HEIGHT = 460; // shared by every card so side cards match the center card's height
+const GAP = -60; // negative = overlap: each card tucks partly under its neighbor instead of sitting apart
+const SWIPE_THRESHOLD = 60; // px of drag before a swipe counts as a navigation
+const MAX_VISIBLE_DISTANCE = 2; // show active card plus 2 neighbors on each side (5 total)
+
+/** Per-distance-from-center sizing — index 0 is the active card, 1 is the immediate neighbor, 2 is the outer neighbor. */
+const TIERS = [
+  { width: 420, opacity: 1, scale: 1 },
+  { width: 240, opacity: 0.65, scale: 0.86 },
+  { width: 160, opacity: 0.35, scale: 0.74 },
+] as const;
+
+/** Distance from the center, in px, of each tier's card center — derived from GAP + the actual widths so the
+ *  empty space between adjacent card edges stays constant no matter how much each tier shrinks. */
+const CENTER_OFFSETS: number[] = TIERS.reduce<number[]>((offsets, tier, i) => {
+  if (i === 0) return [0];
+  const prevHalf = TIERS[i - 1].width / 2;
+  const currHalf = tier.width / 2;
+  return [...offsets, offsets[i - 1] + prevHalf + GAP + currHalf];
+}, []);
+
+/** Shortest signed distance from `index` to `active` around a circular track of length `length`. */
+function circularDiff(index: number, active: number, length: number) {
+  let diff = index - active;
+  if (diff > length / 2) diff -= length;
+  if (diff < -length / 2) diff += length;
+  return diff;
+}
+
+interface SlideCardProps {
+  project: Project;
+  index: number;
+  diff: number;
+  onSelect: () => void;
+  onOpen: (project: Project) => void;
+}
+
+/** One card in the slider — full-size and opaque at diff===0, smaller and dimmed at diff===±1. */
+function SlideCard({ project, index, diff, onSelect, onOpen }: SlideCardProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(project.image) && !imageFailed;
   const [hovered, setHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const reversed = index % 2 === 1;
 
   const [c1, c2] = ACCENTS[index % ACCENTS.length];
+  const distance = Math.min(Math.abs(diff), TIERS.length - 1);
+  const tier = TIERS[distance];
+  const isActive = diff === 0;
+  const isNear = distance === 1;
+  const isVisible = Math.abs(diff) <= MAX_VISIBLE_DISTANCE;
 
-  // Precomputed color-mix tints so the row has a persistent color identity
-  // at rest, not just when the mouse-tracked glow kicks in on hover.
-  const borderTint = `color-mix(in srgb, ${c1} 30%, var(--color-border-strong))`;
-  const pillBg = `color-mix(in srgb, ${c1} 8%, var(--color-bg))`;
-  const pillBorder = `color-mix(in srgb, ${c1} 28%, var(--color-border))`;
-  const pillText = `color-mix(in srgb, ${c1} 65%, var(--color-text-secondary))`;
+  const pillBg = `color-mix(in srgb, ${c1} 22%, var(--color-bg))`;
+  const pillBorder = `color-mix(in srgb, ${c1} 55%, var(--color-border))`;
+  const pillText = `color-mix(in srgb, ${c1} 80%, var(--color-text-primary))`;
+  const tintedBg = `linear-gradient(160deg, color-mix(in srgb, ${c1} 10%, var(--color-bg-elevated)) 0%, color-mix(in srgb, ${c2} 6%, var(--color-bg-elevated)) 55%, var(--color-bg-elevated) 100%)`;
 
+  // Mouse-tracked glow, only meaningful on the active card.
   const mx = useMotionValue(-400);
   const my = useMotionValue(-400);
   const sx = useSpring(mx, { damping: 22, stiffness: 240 });
   const sy = useSpring(my, { damping: 22, stiffness: 240 });
-  const glowBg = useMotionTemplate`radial-gradient(circle 420px at ${sx}px ${sy}px, color-mix(in srgb, ${c1} 18%, transparent) 0%, color-mix(in srgb, ${c2} 8%, transparent) 45%, transparent 68%)`;
-  const sheen  = useMotionTemplate`radial-gradient(circle 220px at ${sx}px ${sy}px, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 40%, transparent 65%)`;
+  const glowBg = useMotionTemplate`radial-gradient(circle 320px at ${sx}px ${sy}px, color-mix(in srgb, ${c1} 16%, transparent) 0%, color-mix(in srgb, ${c2} 8%, transparent) 45%, transparent 68%)`;
 
   function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    if (!cardRef.current) return;
+    if (!isActive || !cardRef.current) return;
     const r = cardRef.current.getBoundingClientRect();
     mx.set(e.clientX - r.left);
     my.set(e.clientY - r.top);
@@ -69,123 +110,113 @@ function ProjectRow({ project, index, onOpen }: ProjectRowProps) {
     mx.set(-600); my.set(-600);
   }
 
+  function handleClick() {
+    if (isActive) onOpen(project);
+    else onSelect();
+  }
+
   return (
     <motion.div
       ref={cardRef}
       onMouseMove={onMouseMove}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={onMouseLeave}
-      initial={{ opacity: 0, y: 32 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.6, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-      style={{ borderColor: borderTint }}
-      className={cn(
-        "group relative flex cursor-pointer flex-col overflow-hidden rounded-3xl border bg-bg-elevated shadow-[0_2px_12px_-4px_rgba(45,36,32,0.08)] transition-shadow hover:shadow-[0_10px_40px_-10px_rgba(45,36,32,0.16)] md:flex-row",
-        reversed && "md:flex-row-reverse"
-      )}
-      onClick={() => onOpen(project)}
+      className={cn("absolute top-0 left-1/2 flex flex-col overflow-hidden rounded-3xl border cursor-pointer")}
+      style={{
+        height: CARD_HEIGHT,
+        width: tier.width,
+        backgroundImage: tintedBg,
+        borderColor: `color-mix(in srgb, ${c1} ${isActive ? 45 : isNear ? 22 : 12}%, var(--color-border-strong))`,
+        boxShadow: isActive
+          ? `0 24px 60px -16px color-mix(in srgb, ${c1} 38%, transparent), 0 10px 24px -14px rgba(45,36,32,0.25)`
+          : `0 10px 30px -12px color-mix(in srgb, ${c1} ${isNear ? 20 : 10}%, transparent)`,
+      }}
+      animate={{
+        x: Math.sign(diff) * CENTER_OFFSETS[distance] - tier.width / 2,
+        scale: tier.scale,
+        opacity: isVisible ? tier.opacity : 0,
+        zIndex: 20 - distance,
+      }}
+      transition={{ type: "spring", stiffness: 260, damping: 30 }}
+      onClick={handleClick}
       role="button"
-      tabIndex={0}
-      aria-label={`View details for ${project.title}`}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(project); } }}
+      tabIndex={isVisible ? 0 : -1}
+      aria-hidden={!isVisible}
+      aria-label={isActive ? `View details for ${project.title}` : `Show ${project.title}`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
     >
-      {/* Persistent top accent bar — always visible, brightens on hover */}
+      {/* Mouse-tracked glow (active card only) */}
+      {isActive && (
+        <motion.div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10" style={{ backgroundImage: glowBg }} />
+      )}
+
+      {/* Top accent bar */}
       <motion.div
         aria-hidden="true"
-        className="absolute top-0 left-0 z-30 h-[3px] w-full"
-        style={{ background: `linear-gradient(90deg, ${c1}, ${c2})` }}
-        animate={{ opacity: hovered ? 1 : 0.65 }}
+        className="relative z-20 w-full shrink-0"
+        style={{ height: isActive ? 5 : isNear ? 4 : 3, background: `linear-gradient(90deg, ${c1}, ${c2})` }}
+        animate={{ opacity: isActive && hovered ? 1 : isActive ? 1 : isNear ? 0.7 : 0.45 }}
         transition={{ duration: 0.3 }}
       />
 
-      {/* Mouse-tracked glow */}
-      <motion.div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10" style={{ backgroundImage: glowBg }} />
-      <motion.div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 mix-blend-screen" style={{ backgroundImage: sheen }} />
-
-      {/* Image zone */}
-      <div className="relative h-56 w-full shrink-0 overflow-hidden bg-bg-elevated-2 sm:h-72 md:h-auto md:w-[46%]">
+      {/* Image */}
+      <div className="relative z-20 w-full shrink-0 overflow-hidden bg-bg-elevated-2" style={{ height: isActive ? "50%" : "44%" }}>
         {showImage ? (
-          <>
-            <Image
-              src={project.image as string}
-              alt={`${project.title} cover`}
-              fill
-              sizes="(min-width: 768px) 46vw, 100vw"
-              className={cn("object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]", hovered && "scale-[1.06]")}
-              onError={() => setImageFailed(true)}
-            />
-            {/* Scanline overlay on hover */}
-            <motion.div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0"
-              style={{
-                backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(45,36,32,0.04) 3px, rgba(45,36,32,0.04) 4px)",
-              }}
-              animate={{ opacity: hovered ? 1 : 0 }}
-              transition={{ duration: 0.3 }}
-            />
-          </>
+          <Image
+            src={project.image as string}
+            alt={`${project.title} cover`}
+            fill
+            sizes="440px"
+            className={cn("object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]", isActive && hovered && "scale-[1.05]")}
+            onError={() => setImageFailed(true)}
+            draggable={false}
+          />
         ) : (
-          <div className="flex h-full w-full items-center justify-center" style={{ backgroundColor: `color-mix(in srgb, ${c1} 10%, var(--color-bg-elevated-2))` }}>
-            <span className="font-mono text-6xl font-bold select-none" style={{ color: `color-mix(in srgb, ${c1} 35%, transparent)` }} aria-hidden="true">
+          <div
+            className="flex h-full w-full items-center justify-center"
+            style={{ backgroundColor: `color-mix(in srgb, ${c1} 10%, var(--color-bg-elevated-2))` }}
+          >
+            <span
+              className="select-none font-mono text-4xl font-bold"
+              style={{ color: `color-mix(in srgb, ${c1} 35%, transparent)` }}
+              aria-hidden="true"
+            >
               {getInitials(project.title)}
             </span>
           </div>
         )}
-
-        {/* Index chip, top-left of image — colored, always visible */}
-        <span
-          className="absolute left-3 top-3 z-20 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[10px] font-bold text-white shadow-sm"
-          style={{ background: `linear-gradient(90deg, ${c1}, ${c2})` }}
-        >
-          {String(index + 1).padStart(2, "0")}
-        </span>
-
-        {/* Hover: "View" pill bottom-right */}
-        <motion.div
-          className="absolute bottom-3 right-3 z-20"
-          animate={{ opacity: hovered ? 1 : 0, y: hovered ? 0 : 6 }}
-          transition={{ duration: 0.22 }}
-        >
-          <span className="inline-flex items-center gap-1 rounded-full bg-bg/90 px-2.5 py-1 text-[10px] font-semibold text-text-primary backdrop-blur-sm shadow-sm">
-            View
-            <ArrowUpRight className="h-3 w-3" />
-          </span>
-        </motion.div>
       </div>
 
       {/* Content */}
-      <div className="relative z-20 flex flex-1 flex-col justify-center gap-3 overflow-hidden p-6 sm:p-8 md:p-10">
-        {/* Giant ghost index number — tinted with the row's accent color */}
-        <span
-          aria-hidden="true"
-          className={cn(
-            "pointer-events-none absolute -top-3 select-none font-mono text-7xl font-bold sm:text-8xl",
-            reversed ? "right-5 sm:right-7" : "left-5 sm:left-7"
-          )}
-          style={{ color: `color-mix(in srgb, ${c1} 14%, transparent)` }}
-        >
-          {String(index + 1).padStart(2, "0")}
-        </span>
-
+      <div className="relative z-20 flex flex-1 flex-col gap-2 p-5 sm:p-6">
         <p
-          className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]"
+          className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold"
           style={{ color: pillText }}
         >
           <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: c1 }} aria-hidden="true" />
           {project.tagline}
         </p>
 
-        <h3 className="text-2xl font-bold leading-snug text-text-primary transition-colors duration-200 sm:text-3xl" style={{ ["--hover-color" as string]: c1 }}>
-          <span className="transition-colors duration-200 group-hover:text-[var(--hover-color)]">{project.title}</span>
+        <h3
+          className={cn(
+            "line-clamp-2 font-bold leading-snug text-text-primary transition-colors duration-200",
+            isActive ? "text-xl sm:text-2xl" : isNear ? "text-base" : "text-[13px]"
+          )}
+        >
+          {project.title}
         </h3>
 
-        <p className="max-w-xl text-[14px] leading-relaxed text-text-secondary">{project.description}</p>
+        {isActive && (
+          <p className="line-clamp-3 text-[13px] leading-relaxed text-text-secondary">{project.description}</p>
+        )}
 
-        {/* Tech pills — tinted with the row's accent color */}
         <div className="flex flex-wrap gap-1.5 pt-0.5">
-          {project.tech.slice(0, 6).map((t) => (
+          {project.tech.slice(0, isActive ? 5 : isNear ? 3 : 2).map((t) => (
             <span
               key={t}
               className="rounded-md border px-2 py-0.5 font-mono text-[10px] font-medium"
@@ -194,63 +225,154 @@ function ProjectRow({ project, index, onOpen }: ProjectRowProps) {
               {t}
             </span>
           ))}
-          {project.tech.length > 6 && (
-            <span
-              className="rounded-md border px-2 py-0.5 font-mono text-[10px] font-medium"
-              style={{ backgroundColor: pillBg, borderColor: pillBorder, color: pillText }}
-            >
-              +{project.tech.length - 6}
-            </span>
-          )}
         </div>
 
-        {/* Actions */}
-        <div className="mt-1 flex items-center gap-2 pt-2">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onOpen(project); }}
-            className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11px] font-semibold text-text-primary transition-all"
-            style={{ borderColor: pillBorder }}
-          >
-            Details
-          </button>
-          {project.repoUrl && (
-            <Link
-              href={project.repoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[11px] font-medium text-text-muted transition-all hover:border-accent-cyan/50 hover:text-accent-cyan"
-            >
-              <FolderGit2 className="h-3 w-3" />
-              Code
-            </Link>
-          )}
-          {project.liveUrl && (
-            <Link
-              href={project.liveUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="ml-auto inline-flex items-center gap-1 rounded-full bg-gradient-aurora px-3.5 py-1.5 text-[11px] font-semibold text-white"
-            >
-              <ExternalLink className="h-3 w-3" />
-              Live
-            </Link>
-          )}
-        </div>
+        {isActive && (
+          <div className="mt-auto flex items-center gap-2 pt-3">
+            {project.repoUrl && (
+              <Link
+                href={project.repoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[11px] font-medium text-text-muted transition-all hover:border-accent-cyan/50 hover:text-accent-cyan"
+              >
+                <FolderGit2 className="h-3 w-3" />
+                Code
+              </Link>
+            )}
+            {project.liveUrl && (
+              <Link
+                href={project.liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="ml-auto inline-flex items-center gap-1 rounded-full bg-gradient-aurora px-3.5 py-1.5 text-[11px] font-semibold text-white"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Live
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Animated bottom accent bar — fills in on hover */}
-      <motion.div
-        aria-hidden="true"
-        className="absolute bottom-0 left-0 h-[2px] w-full"
-        style={{ background: `linear-gradient(90deg, ${c1}, ${c2})` }}
-        initial={{ scaleX: 0, originX: "left" }}
-        animate={{ scaleX: hovered ? 1 : 0 }}
-        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      />
+      {/* Animated bottom accent bar — fills in on hover of the active card */}
+      {isActive && (
+        <motion.div
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 z-20 h-[2px] w-full"
+          style={{ background: `linear-gradient(90deg, ${c1}, ${c2})` }}
+          initial={{ scaleX: 0, originX: "left" }}
+          animate={{ scaleX: hovered ? 1 : 0 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        />
+      )}
     </motion.div>
+  );
+}
+
+interface ProjectsSliderProps {
+  onOpen: (project: Project) => void;
+}
+
+/** The 3D/focused-perspective carousel: arrows, side-card clicks, swipe, and keyboard arrows all navigate. Loops circularly. */
+function ProjectsSlider({ onOpen }: ProjectsSliderProps) {
+  const length = projects.length;
+  const [active, setActive] = useState(0);
+
+  const goTo = useCallback((index: number) => setActive(((index % length) + length) % length), [length]);
+  const next = useCallback(() => goTo(active + 1), [active, goTo]);
+  const prev = useCallback(() => goTo(active - 1), [active, goTo]);
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowLeft") prev();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [next, prev]);
+
+  function handleDragEnd(_: unknown, info: PanInfo) {
+    if (info.offset.x <= -SWIPE_THRESHOLD) next();
+    else if (info.offset.x >= SWIPE_THRESHOLD) prev();
+  }
+
+  const visible = useMemo(
+    () =>
+      projects
+        .map((project, index) => ({ project, index, diff: circularDiff(index, active, length) }))
+        .filter((v) => Math.abs(v.diff) <= MAX_VISIBLE_DISTANCE),
+    [active, length]
+  );
+
+  return (
+    <div className="relative flex flex-col items-center gap-6">
+      <div className="relative w-full overflow-hidden" style={{ height: CARD_HEIGHT, perspective: 1200 }}>
+        <motion.div
+          className="absolute inset-0 flex items-center justify-center"
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.15}
+          onDragEnd={handleDragEnd}
+        >
+          <AnimatePresence initial={false}>
+            {visible.map(({ project, index, diff }) => (
+              <SlideCard
+                key={project.slug}
+                project={project}
+                index={index}
+                diff={diff}
+                onSelect={() => goTo(active + diff)}
+                onOpen={onOpen}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+
+      {/* Nav arrows + dots */}
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={prev}
+          aria-label="Previous project"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-accent-violet bg-accent-violet text-white transition-colors hover:bg-accent-violet/85"
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+        </button>
+
+        <div className="flex items-center gap-1.5">
+          {projects.map((p, i) => {
+            const [dotC1] = ACCENTS[i % ACCENTS.length];
+            return (
+              <button
+                key={p.slug}
+                type="button"
+                onClick={() => goTo(i)}
+                aria-label={`Go to ${p.title}`}
+                aria-current={i === active}
+                className="h-1.5 rounded-full transition-all duration-300"
+                style={{
+                  width: i === active ? 24 : 6,
+                  backgroundColor: i === active ? dotC1 : `color-mix(in srgb, ${dotC1} 35%, var(--color-border-strong))`,
+                }}
+              />
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={next}
+          aria-label="Next project"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-accent-violet bg-accent-violet text-white transition-colors hover:bg-accent-violet/85"
+        >
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -396,14 +518,14 @@ function ProjectModal({ project, onClose }: ProjectModalProps) {
 
               {/* Close button — positioned over image */}
               <button
-  type="button"
-  onClick={onClose}
-  aria-label="Close project details"
-  data-cursor-label="CLOSE"
-  className="glass absolute right-4 top-4 z-50 inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-strong backdrop-blur-sm transition-colors hover:text-accent-violet"
->
-  <X className="h-4 w-4" aria-hidden="true" />
-</button>
+                type="button"
+                onClick={onClose}
+                aria-label="Close project details"
+                data-cursor-label="CLOSE"
+                className="glass absolute right-4 top-4 z-50 inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-strong backdrop-blur-sm transition-colors hover:text-accent-violet"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
             </div>
 
             {/* Content */}
@@ -504,29 +626,17 @@ export function Projects() {
           <motion.div variants={fadeUp}>
             <TagLabel>projects</TagLabel>
           </motion.div>
-            <motion.h2
+          <motion.h2
             variants={tokenReveal}
             className="inline-block w-fit -mt-2 text-6xl md:text-7xl leading-none"
           >
-            <MarkerHighlight>Things I&apos;ve <span className="scribble-underline">built</span> with</MarkerHighlight>
+            <MarkerHighlight>Things I&apos;ve <span className="scribble-underline">built</span></MarkerHighlight>
           </motion.h2>
           <motion.p variants={fadeUp} className="text-[15px] leading-relaxed text-text-secondary">
-            From AI-powered platforms to 3D simulators click any card to read the full story.
+            From AI-powered platforms to 3D simulators, swipe through the projects below.
           </motion.p>
         </Reveal>
-
-        {/* ── Alternating vertical list ── */}
-        <div className="flex flex-col gap-6 sm:gap-8">
-          {projects.map((project, i) => (
-            <ProjectRow
-              key={project.slug}
-              project={project}
-              index={i}
-              onOpen={setActiveProject}
-            />
-          ))}
-        </div>
-
+        <ProjectsSlider onOpen={setActiveProject} />
       </Container>
 
       <ProjectModal

@@ -146,14 +146,6 @@ export function CornerBrackets({ className, toneClassName }: CornerBracketsProps
   );
 }
 
-/**
- * Replace the existing `LogoMark` function in components/UI.tsx with this version.
- * Fix: the old version used a large negative margin (-mr-3 / -mr-1.5) to overlap the
- * "S" and "A" glyphs, which fused them into an unreadable blob. This version keeps
- * the letters side by side (readable) and still cuts the full name across the
- * vertical middle as a paper-strip label.
- */
-
 interface LogoMarkProps {
   /** Scales the whole mark down for tight spaces like the sidebar dock. */
   compact?: boolean;

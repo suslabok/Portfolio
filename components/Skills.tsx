@@ -275,8 +275,6 @@ export function Skills() {
         transition={{ duration: 30, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />
 
-
-
       <Container className="flex flex-col gap-12">
         <Reveal className="flex flex-col gap-4">
           <motion.div variants={fadeUp}>
@@ -298,22 +296,21 @@ export function Skills() {
         <Reveal>
           <motion.div
             variants={fadeUp}
-            className="marquee-wrapper relative mt-6 overflow-hidden rounded-full border-2 border-border-strong bg-bg-elevated/50 py-3"
+            className="marquee-wrapper relative mt-6 overflow-hidden rounded-full border-2 border-accent-violet bg-accent-violet py-3"
           >
-            <div className="marquee-loop gap-8 whitespace-nowrap px-4 text-sm text-text-muted">
+            <div className="marquee-loop gap-8 whitespace-nowrap px-4 text-sm text-white">
               {[...skills, ...skills].map((skill, i) => (
                 <span
                   key={`marquee-${i}-${skill}`}
                   className="flex items-center gap-2 font-mono tracking-wide"
                 >
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent-pink" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent-amber" />
                   {skill}
                 </span>
               ))}
             </div>
           </motion.div>
         </Reveal>
-
       </Container>
     </section>
   );

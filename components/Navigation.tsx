@@ -11,7 +11,6 @@ import { easeOutExpo } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { personal } from "@/lib/data";
 
-/** Floating scroll-to-top button — fades and pops in once you're a screen past the hero. */
 export function BackToTop() {
   const { scrollY } = useScroll();
   const [visible, setVisible] = useState(false);
@@ -34,7 +33,7 @@ export function BackToTop() {
           whileHover={{ y: -4, scale: 1.08 }}
           whileTap={{ scale: 0.92 }}
           transition={{ duration: 0.3, ease: easeOutExpo }}
-          className="glass-elevated fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full text-text-primary sm:bottom-8 sm:right-8"
+          className="glass-elevated fixed bottom-24 right-4 z-40 flex h-11 w-11 items-center justify-center rounded-full text-text-primary sm:bottom-8 sm:right-8"
         >
           <motion.span
             animate={{ y: [0, -3, 0] }}
@@ -52,8 +51,8 @@ const NAV_ITEMS = [
   { id: "home",     label: "Home",     icon: Home },
   { id: "about",    label: "About",    icon: UserRound },
   { id: "journey",  label: "Journey",  icon: Milestone },
-  { id: "projects", label: "Projects", icon: FolderKanban },
   { id: "skills",   label: "Stack",    icon: Layers },
+  { id: "projects", label: "Projects", icon: FolderKanban },
   { id: "contact",  label: "Contact",  icon: Mail },
 ] as const;
 
@@ -61,7 +60,6 @@ const IDS = NAV_ITEMS.map((item) => item.id);
 
 const pillTransition = { type: "spring", stiffness: 380, damping: 32 } as const;
 
-/** Small label bubble that pops out to the right of a dock icon on hover. */
 function DockTooltip({ children }: { children: React.ReactNode }) {
   return (
     <span
@@ -73,36 +71,65 @@ function DockTooltip({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Pinned Polaroid photo — sits above the logo mark. */
-function DockBrand() {
+interface DirectionProps {
+  direction?: "vertical" | "horizontal";
+}
+
+function DockBrand({ direction = "vertical" }: DirectionProps) {
+  const isHorizontal = direction === "horizontal";
+
   return (
-    <Link href="#home" data-cursor-label="HOME" className="group relative mt-3 flex items-center justify-center">
-      <div className="sidebar-pin" aria-hidden="true" />
+    <Link
+      href="#home"
+      data-cursor-label="HOME"
+      className={cn(
+        "group relative flex items-center justify-center",
+        isHorizontal ? "mx-0.5" : "mt-3"
+      )}
+    >
+      {!isHorizontal && <div className="sidebar-pin" aria-hidden="true" />}
       <motion.div
         whileHover={{ rotate: 0, scale: 1.06 }}
         initial={{ rotate: -3 }}
         transition={pillTransition}
-        className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white/70 shadow-[0_4px_10px_rgba(0,0,0,0.35)]"
+        className={cn(
+          "relative shrink-0 overflow-hidden rounded-full border-2 border-white/70 shadow-[0_4px_10px_rgba(0,0,0,0.35)]",
+          isHorizontal ? "h-9 w-9" : "h-12 w-12"
+        )}
       >
-        <Image src="/images/profile.jpg" alt="Sushma Acharya" fill sizes="48px" className="object-cover" />
+        <Image
+          src="/images/profile.jpg"
+          alt="Sushma Acharya"
+          fill
+          sizes={isHorizontal ? "36px" : "48px"}
+          className="object-cover"
+          draggable={false}
+        />
       </motion.div>
       <DockTooltip>Sushma Acharya</DockTooltip>
     </Link>
   );
 }
 
-/** "S A" monogram logo mark — sits below the pinned photo. Letters stay side by side (legible), name cuts across the middle. */
-function DockLogoMark() {
+function DockLogoMark({ direction = "vertical" }: DirectionProps) {
+  const isHorizontal = direction === "horizontal";
+
   return (
     <Link
       href="#home"
       data-cursor-label="HOME"
       aria-label="Sushma Acharya — Home"
-      className="group relative mb-1 mt-2 flex h-14 w-16 select-none items-center justify-center"
+      className={cn(
+        "group relative select-none items-center justify-center",
+        isHorizontal ? "mx-0.5 flex h-9 w-10" : "mb-1 mt-2 flex h-14 w-16"
+      )}
     >
       <motion.span
         aria-hidden="true"
-        className="absolute inset-0 flex items-center justify-center gap-0.5 font-serif text-3xl font-bold tracking-tight text-[#8a5a52]"
+        className={cn(
+          "absolute inset-0 flex items-center justify-center gap-0.5 font-serif font-bold tracking-tight text-[#8a5a52]",
+          isHorizontal ? "text-xl" : "text-3xl"
+        )}
         initial={{ opacity: 0.92 }}
         animate={{ opacity: [0.92, 1, 0.92] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -112,7 +139,12 @@ function DockLogoMark() {
       </motion.span>
 
       {/* Name cut across the middle of the letters */}
-      <span className="absolute left-1/2 top-[50%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-sm bg-[#f7f2e9] px-1 py-[1px] font-mono text-[5.5px] font-medium uppercase leading-none tracking-[0.03em] text-[#8a5a52] shadow-[0_1px_2px_rgba(0,0,0,0.15)]">
+      <span
+        className={cn(
+          "absolute left-1/2 top-[50%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-sm bg-[#f7f2e9] px-1 py-[1px] font-mono font-medium uppercase leading-none tracking-[0.03em] text-[#8a5a52] shadow-[0_1px_2px_rgba(0,0,0,0.15)]",
+          isHorizontal ? "text-[4.5px]" : "text-[5.5px]"
+        )}
+      >
         Sushma Acharya
       </span>
 
@@ -121,15 +153,24 @@ function DockLogoMark() {
   );
 }
 
-interface DockNavListProps {
+interface DockNavListProps extends DirectionProps {
   activeId: string;
   layoutIdPrefix: string;
 }
 
-/** Vertical icon-only nav list for the glass dock. */
-function DockNavList({ activeId, layoutIdPrefix }: DockNavListProps) {
+/** Nav icon list, shared between the desktop vertical dock and the mobile horizontal bar. */
+function DockNavList({ activeId, layoutIdPrefix, direction = "vertical" }: DockNavListProps) {
+  const isHorizontal = direction === "horizontal";
+
   return (
-    <nav className="flex flex-1 flex-col items-center gap-2.5 py-3">
+    <nav
+      className={cn(
+        "flex",
+        isHorizontal
+          ? "flex-1 flex-row items-center justify-between gap-0.5"
+          : "flex-1 flex-col items-center gap-2.5 py-3"
+      )}
+    >
       {NAV_ITEMS.map((item) => {
         const isActive = activeId === item.id;
         const Icon = item.icon;
@@ -138,9 +179,12 @@ function DockNavList({ activeId, layoutIdPrefix }: DockNavListProps) {
           <Link
             key={item.id}
             href={`#${item.id}`}
-            data-cursor-label="GO"
+            data-cursor-label={isHorizontal ? undefined : "GO"}
             aria-label={item.label}
-            className="group relative flex h-12 w-12 items-center justify-center rounded-2xl transition-transform duration-200 hover:scale-105"
+            className={cn(
+              "group relative flex items-center justify-center rounded-2xl transition-transform duration-200",
+              isHorizontal ? "h-9 w-9 shrink-0" : "h-12 w-12 hover:scale-105"
+            )}
           >
             {isActive && (
               <motion.span
@@ -155,13 +199,14 @@ function DockNavList({ activeId, layoutIdPrefix }: DockNavListProps) {
 
             <Icon
               className={cn(
-                "relative h-5 w-5 transition-colors",
+                "relative transition-colors",
+                isHorizontal ? "h-4 w-4" : "h-5 w-5",
                 isActive ? "text-white" : "text-text-primary/55 group-hover:text-text-primary/90"
               )}
               strokeWidth={2}
               aria-hidden="true"
             />
-            <DockTooltip>{item.label}</DockTooltip>
+            {!isHorizontal && <DockTooltip>{item.label}</DockTooltip>}
           </Link>
         );
       })}
@@ -169,40 +214,73 @@ function DockNavList({ activeId, layoutIdPrefix }: DockNavListProps) {
   );
 }
 
-/** Fixed, narrow floating icon dock — frosted transparent glass, always on. Replaces the top navbar. */
+function ResumeButton({ direction = "vertical" }: DirectionProps) {
+  const isHorizontal = direction === "horizontal";
+
+  return (
+    <Magnetic strength={0.15}>
+      <Link
+        href={personal.resumeUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-cursor-label="↓"
+        aria-label="Download resume"
+        className={cn(
+          "group relative flex shrink-0 items-center justify-center rounded-2xl border border-text-primary/15 bg-text-primary/5 text-text-primary/70 transition-all duration-200 hover:border-text-primary/30 hover:bg-text-primary/10 hover:text-text-primary",
+          isHorizontal ? "h-9 w-9" : "h-12 w-12"
+        )}
+      >
+        <Download className={cn(isHorizontal ? "h-4 w-4" : "h-5 w-5")} strokeWidth={2} aria-hidden="true" />
+        <DockTooltip>Download Resume</DockTooltip>
+      </Link>
+    </Magnetic>
+  );
+}
+
 export function Sidebar() {
   const activeId = useActiveSection(IDS);
 
   return (
-    <motion.aside
-      initial={{ x: -30, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: easeOutExpo }}
-      className="glass-dock fixed left-3 top-1/2 z-40 flex w-[96px] -translate-y-1/2 flex-col items-center rounded-[32px] py-3 sm:left-4 sm:w-[104px]"
-    >
-      <DockBrand />
-      <DockLogoMark />
+    <>
+      <motion.aside
+        initial={{ x: -30, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: easeOutExpo }}
+        className="glass-dock fixed left-3 top-1/2 z-40 hidden w-[96px] -translate-y-1/2 flex-col items-center rounded-[32px] py-3 sm:left-4 sm:flex sm:w-[104px]"
+      >
+        <DockBrand />
+        <DockLogoMark />
 
-      <div className="mx-3 mb-1 mt-1 h-px w-6 bg-text-primary/15" />
+        <div className="mx-3 mb-1 mt-1 h-px w-6 bg-text-primary/15" />
 
-      <DockNavList activeId={activeId} layoutIdPrefix="dock" />
+        <DockNavList activeId={activeId} layoutIdPrefix="dock" direction="vertical" />
 
-      <div className="mb-1 mt-1 flex items-center justify-center">
-        <Magnetic strength={0.15}>
-          <Link
-            href={personal.resumeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-cursor-label="↓"
-            aria-label="Download resume"
-            className="group relative flex h-12 w-12 items-center justify-center rounded-2xl border border-text-primary/15 bg-text-primary/5 text-text-primary/70 transition-all duration-200 hover:border-text-primary/30 hover:bg-text-primary/10 hover:text-text-primary"
-          >
-            <Download className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-            <DockTooltip>Download Resume</DockTooltip>
-          </Link>
-        </Magnetic>
-      </div>
-    </motion.aside>
+        <div className="mb-1 mt-1 flex items-center justify-center">
+          <ResumeButton />
+        </div>
+      </motion.aside>
+
+      {/* Phone — horizontal bar, pinned to the bottom */}
+      <motion.nav
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: easeOutExpo }}
+        aria-label="Primary"
+        className="glass-dock fixed inset-x-3 bottom-3 z-40 flex items-center gap-1 rounded-[28px] px-1.5 py-1.5 sm:hidden"
+        style={{ paddingBottom: "calc(0.375rem + env(safe-area-inset-bottom))" }}
+      >
+        <DockBrand direction="horizontal" />
+        <DockLogoMark direction="horizontal" />
+
+        <div className="mx-0.5 h-7 w-px shrink-0 bg-text-primary/15" />
+
+        <DockNavList activeId={activeId} layoutIdPrefix="mobile-dock" direction="horizontal" />
+
+        <div className="mx-0.5 h-7 w-px shrink-0 bg-text-primary/15" />
+
+        <ResumeButton direction="horizontal" />
+      </motion.nav>
+    </>
   );
 }
 

@@ -754,13 +754,22 @@ section[id] {
   outline: 2px solid var(--color-accent-violet);
   outline-offset: 3px;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   CUSTOM CURSOR — hide the native cursor everywhere on fine-pointer devices
+   ────────────────────────────────────────────────────────────────────────── */
 @media (pointer: fine) {
-  body {
-    cursor: none;
+  *,
+  *::before,
+  *::after {
+    cursor: none !important;
   }
-  a,
-  button,
-  [role="button"] {
-    cursor: none;
-  }
+}
+
+img,
+svg {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
 }

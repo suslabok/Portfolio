@@ -77,13 +77,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} ${caveat.variable} h-full`}
     >
       <body className="grain min-h-full bg-bg font-sans text-text-primary">
-  
         <MotionConfig reducedMotion="user">
           <AmbientBackground />
-<CustomCursor />
+          <CustomCursor />
           <ScrollProgress />
           <Sidebar />
-          <div className="pl-[104px] sm:pl-[116px]">{children}</div>
+          <div className="sm:pl-[116px]">{children}</div>
           <BackToTop />
         </MotionConfig>
       </body>
